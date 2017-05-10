@@ -98,20 +98,18 @@ def draw_char_maximum(char, font_path, canvas_size):
         char_size += 1
     return img
 
-def get_filepaths(dirpath, findname):
-    '''
-    パスのディレクトリ内のファイルのパスを取得
-    findnameでワイルドカード検索可能
-    'foo/bar/', '*.png' => 'foo/bar/'内のpng画像のパスのリストを返す
-    '''
+def get_ext_filepaths(dirpath, exts):
     dirpath = os.path.normpath(dirpath)
-    filepaths = glob.glob(dirpath + '/' + findname)
+    filepaths = []
+    for ext in exts:
+        filepaths_tmp = glob.glob(dirpath + '/*.' + ext)
+        filepaths.extend(filepaths_tmp)
     return filepaths
 
-def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False):
+def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False, output_ext='png'):
     if not os.path.exists(dst_dir_path):
         os.mkdir(dst_dir_path)
-    font_paths = get_filepaths(src_font_path, '*.ttf')
+    font_paths = get_ext_filepaths(src_font_path, ['ttf', 'ttc', 'otf'])
     for font_path in font_paths:
         dst_img_dir_path = \
             os.path.join(dst_dir_path, os.path.basename(os.path.splitext(font_path)[0]))
@@ -120,7 +118,7 @@ def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True
         for c in CAPS:
             img, maximum = draw_char_center(c, font_path, canvas_size, font_size)
             if img:
-                img.save(os.path.join(dst_img_dir_path, c + ".png"))
+                img.save(os.path.join(dst_img_dir_path, c + '.'  + output_ext))
         print ('proccessed {0}'.format(font_path))
 
 if __name__ == "__main__":
@@ -131,9 +129,14 @@ if __name__ == "__main__":
     parser.add_argument('--not-centering', dest='is_center', action='store_true', help='Centering or not')
     parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximum or not')
     parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, help='Font point size')
+    parser.add_argument('-e', '--ext', dest='ext', action='store', type=str, default='png', help='Output extention')
     args = parser.parse_args()
     if args.font_size == None:
         font_size = args.canvas_size
     else:
         font_size = args.font_size
-    font2img(args.src_dir_path, args.dst_dir_path, args.canvas_size, font_size)
+    font2img(src_font_path=args.src_dir_path, \
+             dst_dir_path=args.dst_dir_path, \
+             canvas_size=args.canvas_size, \
+             font_size=font_size, \
+             output_ext=args.ext)
