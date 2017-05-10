@@ -109,13 +109,19 @@ def get_filepaths(dirpath, findname):
     return filepaths
 
 def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False):
+    if not os.path.exists(dst_dir_path):
+        os.mkdir(dst_dir_path)
     font_paths = get_filepaths(src_font_path, '*.ttf')
     for font_path in font_paths:
+        dst_img_dir_path = \
+            os.path.join(dst_dir_path, os.path.basename(os.path.splitext(font_path)[0]))
+        if not os.path.exists(dst_img_dir_path):
+            os.mkdir(dst_img_dir_path)
         for c in CAPS:
             img, maximum = draw_char_center(c, font_path, canvas_size, font_size)
             if img:
-                img.save(os.path.join(dst_dir_path, c + ".png"))
-                print ("proccessed: " + c)
+                img.save(os.path.join(dst_img_dir_path, c + ".png"))
+        print ('proccessed {0}'.format(font_path))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='convert ttf/otf into png/jpg/etc')
