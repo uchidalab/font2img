@@ -4,6 +4,11 @@
 前から研究室で受け継がれてたものが古くて改造しにくかったので新しいものを作ろうと．
 PythonのPillowでフォント指定して描画できそうだったからやってみたものです．
 
+## Requirement
+- Python 3.6
+- Pillow
+- numpy
+
 ## Usage
 ```
 python font2img.py {フォントファイル(ttf, otf)が入ったディレクトリ} {出力ディレクトリ(自動生成)} {キャンバスサイズ} [options]
