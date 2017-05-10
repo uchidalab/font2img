@@ -1,4 +1,5 @@
 import os
+import glob
 import argparse
 import numpy as np
 from PIL import Image
@@ -24,8 +25,8 @@ def convert_binary_img(pil_img, threshold=128):
                 num_img[row_i][col_i] = 0
             else:
                 num_img[row_i][col_i] = 255
-    binary_img = num2pil(num_img)
-    return binary_img
+    binary_pil_img = num2pil(num_img)
+    return binary_pil_img
 
 def get_offset(pil_img, normal_canvas_size):
     num_img = pil2num(pil_img)
@@ -73,56 +74,79 @@ def get_offset(pil_img, normal_canvas_size):
     is_maximum = is_tb_maximum or is_lr_maximum
     return offsets, is_maximum
 
-def draw_char(char, font_path, canvas_size, char_size, offsets=(0, 0)):
-    font = ImageFont.truetype(font_path, size=char_size)
+def draw_char(char, font_path, canvas_size, font_size, offsets=(0, 0)):
+    font = ImageFont.truetype(font_path, size=font_size)
     img = Image.new('L', (canvas_size, canvas_size), 255)
     draw = ImageDraw.Draw(img)
     draw.text(offsets, char, 0, font=font)
     img = convert_binary_img(img)
     return img
 
-def draw_char_center(char, font_path, canvas_size, char_size):
-    no_offset_img = draw_char(char, font_path, canvas_size + 20, char_size)
+def draw_char_center(char, font_path, canvas_size, font_size, check_maximum=False):
+    no_offset_img = draw_char(char, font_path, canvas_size + 20, font_size)
     offsets, is_maximum = get_offset(no_offset_img, canvas_size)
-    center_img = draw_char(char, font_path, canvas_size, char_size, offsets)
-    return center_img, is_maximum
+    img = draw_char(char, font_path, canvas_size, font_size, offsets)
+    if check_maximum:
+        return img, is_maximum
+    else:
+        return img
 
-def draw_char_maximum(char, font_path, canvas_size):
-    char_size = canvas_size
+def draw_char_maximum(char, font_path, canvas_size, **kwargs):
+    font_size = canvas_size
     while True:
-        img, is_maximum = draw_char_center(char, font_path, canvas_size, char_size)
-        print (char_size)
+        img, is_maximum = draw_char_center(char, font_path, canvas_size, font_size, check_maximum=True)
         if is_maximum:
             break
-        char_size += 1
+        font_size += 1
     return img
 
-def get_filepaths(dirpath, findname):
-    '''
-    パスのディレクトリ内のファイルのパスを取得
-    findnameでワイルドカード検索可能
-    'foo/bar/', '*.png' => 'foo/bar/'内のpng画像のパスのリストを返す
-    '''
+def get_ext_filepaths(dirpath, exts):
     dirpath = os.path.normpath(dirpath)
-    filepaths = glob.glob(dirpath + '/' + findname)
+    filepaths = []
+    for ext in exts:
+        filepaths_tmp = glob.glob(dirpath + '/*.' + ext)
+        filepaths.extend(filepaths_tmp)
     return filepaths
 
-def font2img(src_font_path, dst_dir_path, charset, canvas_size):
-    font_paths = get_filepaths(src_font_path, '{*.ttf, *.otf}')
+def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False, output_ext='png'):
+    if not os.path.exists(dst_dir_path):
+        os.mkdir(dst_dir_path)
+    if is_maximum:
+        draw_char_func = draw_char_maximum
+    elif is_center:
+        draw_char_func = draw_char_center
+    else:
+        draw_char_func = draw_char
+    font_paths= get_ext_filepaths(src_font_path, ['ttf', 'ttc', 'otf'])
     for font_path in font_paths:
+        dst_img_dir_path = \
+            os.path.join(dst_dir_path, os.path.basename(os.path.splitext(font_path)[0]))
+        if not os.path.exists(dst_img_dir_path):
+            os.mkdir(dst_img_dir_path)
         for c in CAPS:
-            img = draw_char_maximum(c, font_path, canvas_size)
+            img = draw_char_func(char=c, font_path=font_path, canvas_size=canvas_size, font_size=font_size)
             if img:
-                img.save(os.path.join(dst_dir_path, c + ".png"))
-                print ("proccessed: " + c)
+                img.save(os.path.join(dst_img_dir_path, c + '.'  + output_ext))
+        print ('proccessed {0}'.format(font_path))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='convert ttf/otf into png/jpg/etc')
     parser.add_argument('src_dir_path', action='store', type=str, help='Directory path where source files are located.')
     parser.add_argument('dst_dir_path', action='store', type=str, help='Directory path of destination.')
     parser.add_argument('canvas_size', action='store', type=int, help='Canvas size')
-    parser.add_argument('--not-centering', action='store_true', help='Centering or not')
-    parser.add_argument('-m', '--maximum', action='store_true', help='Maximum or not')
-    parser.add_argument('-f', '--font-size', action='store', type=int, help='Font point size')
+    parser.add_argument('--not-centering', dest='is_center', action='store_false', help='Centering or not')
+    parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximum or not')
+    parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, help='Font point size')
+    parser.add_argument('-e', '--ext', dest='ext', action='store', type=str, default='png', help='Output extention')
     args = parser.parse_args()
-    # ttfotf2png("./azukiLP.ttf", "output", CAPS, 10)
+    if args.font_size == None:
+        font_size = args.canvas_size
+    else:
+        font_size = args.font_size
+    font2img(src_font_path=args.src_dir_path, \
+             dst_dir_path=args.dst_dir_path, \
+             canvas_size=args.canvas_size, \
+             font_size=font_size, \
+             is_center=args.is_center, \
+             is_maximum=args.is_maximum, \
+             output_ext=args.ext)

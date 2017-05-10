@@ -88,11 +88,12 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# added by lnaz
+# added by abekoh
 # images
 *.png
 *.jpg
 
 # fonts
 *.ttf
+*.ttc
 *.otf
