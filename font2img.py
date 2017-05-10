@@ -1,4 +1,5 @@
 import os
+import glob
 import argparse
 import numpy as np
 from PIL import Image
@@ -24,8 +25,8 @@ def convert_binary_img(pil_img, threshold=128):
                 num_img[row_i][col_i] = 0
             else:
                 num_img[row_i][col_i] = 255
-    binary_img = num2pil(num_img)
-    return binary_img
+    binary_pil_img = num2pil(num_img)
+    return binary_pil_img
 
 def get_offset(pil_img, normal_canvas_size):
     num_img = pil2num(pil_img)
@@ -107,11 +108,11 @@ def get_filepaths(dirpath, findname):
     filepaths = glob.glob(dirpath + '/' + findname)
     return filepaths
 
-def font2img(src_font_path, dst_dir_path, charset, canvas_size):
-    font_paths = get_filepaths(src_font_path, '{*.ttf, *.otf}')
+def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False):
+    font_paths = get_filepaths(src_font_path, '*.ttf')
     for font_path in font_paths:
         for c in CAPS:
-            img = draw_char_maximum(c, font_path, canvas_size)
+            img, maximum = draw_char_center(c, font_path, canvas_size, font_size)
             if img:
                 img.save(os.path.join(dst_dir_path, c + ".png"))
                 print ("proccessed: " + c)
@@ -121,8 +122,12 @@ if __name__ == "__main__":
     parser.add_argument('src_dir_path', action='store', type=str, help='Directory path where source files are located.')
     parser.add_argument('dst_dir_path', action='store', type=str, help='Directory path of destination.')
     parser.add_argument('canvas_size', action='store', type=int, help='Canvas size')
-    parser.add_argument('--not-centering', action='store_true', help='Centering or not')
-    parser.add_argument('-m', '--maximum', action='store_true', help='Maximum or not')
-    parser.add_argument('-f', '--font-size', action='store', type=int, help='Font point size')
+    parser.add_argument('--not-centering', dest='is_center', action='store_true', help='Centering or not')
+    parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximum or not')
+    parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, help='Font point size')
     args = parser.parse_args()
-    # ttfotf2png("./azukiLP.ttf", "output", CAPS, 10)
+    if args.font_size == None:
+        font_size = args.canvas_size
+    else:
+        font_size = args.font_size
+    font2img(args.src_dir_path, args.dst_dir_path, args.canvas_size, font_size)
