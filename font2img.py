@@ -74,7 +74,7 @@ def get_offset(pil_img, normal_canvas_size):
     is_maximum = is_tb_maximum or is_lr_maximum
     return offsets, is_maximum
 
-def draw_char(char, font_path, canvas_size, font_size, offsets=(0, 0)):
+def draw_char(char, font_path, canvas_size, font_size, is_binary=False, offsets=(0, 0)):
     font = ImageFont.truetype(font_path, size=font_size)
     img = Image.new('L', (canvas_size, canvas_size), 255)
     draw = ImageDraw.Draw(img)
@@ -82,19 +82,19 @@ def draw_char(char, font_path, canvas_size, font_size, offsets=(0, 0)):
     img = convert_binary_img(img)
     return img
 
-def draw_char_center(char, font_path, canvas_size, font_size, check_maximum=False):
-    no_offset_img = draw_char(char, font_path, canvas_size + 20, font_size)
+def draw_char_center(char, font_path, canvas_size, font_size, is_binary, check_maximum=False):
+    no_offset_img = draw_char(char, font_path, canvas_size*2, font_size)
     offsets, is_maximum = get_offset(no_offset_img, canvas_size)
-    img = draw_char(char, font_path, canvas_size, font_size, offsets)
+    img = draw_char(char, font_path, canvas_size, font_size, is_binary=is_binary, offsets=offsets)
     if check_maximum:
         return img, is_maximum
     else:
         return img
 
-def draw_char_maximum(char, font_path, canvas_size, **kwargs):
+def draw_char_maximum(char, font_path, canvas_size, is_binary, **kwargs):
     font_size = canvas_size
     while True:
-        img, is_maximum = draw_char_center(char, font_path, canvas_size, font_size, check_maximum=True)
+        img, is_maximum = draw_char_center(char, font_path, canvas_size, font_size, is_binary, check_maximum=True)
         if is_maximum:
             break
         font_size += 1
@@ -108,7 +108,7 @@ def get_ext_filepaths(dirpath, exts):
         filepaths.extend(filepaths_tmp)
     return filepaths
 
-def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False, output_ext='png'):
+def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False, is_binary=False, output_ext='png'):
     if not os.path.exists(dst_dir_path):
         os.mkdir(dst_dir_path)
     if is_maximum:
@@ -124,7 +124,7 @@ def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True
         if not os.path.exists(dst_img_dir_path):
             os.mkdir(dst_img_dir_path)
         for c in CAPS:
-            img = draw_char_func(char=c, font_path=font_path, canvas_size=canvas_size, font_size=font_size)
+            img = draw_char_func(char=c, font_path=font_path, canvas_size=canvas_size, font_size=font_size, is_binary=is_binary)
             if img:
                 img.save(os.path.join(dst_img_dir_path, c + '.'  + output_ext))
         print ('proccessed {0}'.format(font_path))
@@ -137,6 +137,7 @@ if __name__ == "__main__":
     parser.add_argument('--not-centering', dest='is_center', action='store_false', help='Centering or not')
     parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximum or not')
     parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, help='Font point size')
+    parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Convert binary image')
     parser.add_argument('-e', '--ext', dest='ext', action='store', type=str, default='png', help='Output extention')
     args = parser.parse_args()
     if args.font_size == None:
@@ -149,4 +150,5 @@ if __name__ == "__main__":
              font_size=font_size, \
              is_center=args.is_center, \
              is_maximum=args.is_maximum, \
+             is_binary=args.is_binary, \
              output_ext=args.ext)
