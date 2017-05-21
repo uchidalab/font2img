@@ -79,7 +79,8 @@ def draw_char(char, font_path, canvas_size, font_size, is_binary=False, offsets=
     img = Image.new('L', (canvas_size, canvas_size), 255)
     draw = ImageDraw.Draw(img)
     draw.text(offsets, char, 0, font=font)
-    img = convert_binary_img(img)
+    if is_binary:
+        img = convert_binary_img(img)
     return img
 
 def draw_char_center(char, font_path, canvas_size, font_size, is_binary, check_maximum=False):
