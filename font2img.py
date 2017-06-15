@@ -8,8 +8,8 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 
-def load_charset(lang='eng', src_json_path=''):
-    if lang == 'eng':
+def load_charset(lang='eng_caps', src_json_path=''):
+    if lang == 'eng_caps':
         caps = [chr(i) for i in range(65, 65 + 26)]
         return caps
     cjk = json.load(open(src_json_path))
@@ -46,35 +46,23 @@ def get_offset(pil_img, normal_canvas_size):
     margins = {}
     # top
     for i in range(canvas_size):
-        for j in range(canvas_size):
-            if num_img[i][j] != 255:
-                margins['top'] = i
-                break
-        if 'top' in margins:
+        if False in (num_img[i] == 255):
+            margins['top'] = i
             break
     # bottom
     for i in range(canvas_size):
-        for j in range(canvas_size):
-            if num_img[canvas_size - i - 1][j] != 255:
-                margins['bottom'] = i - canvas_offset
-                break
-        if 'bottom' in margins:
+        if False in (num_img[canvas_size - i - 1] == 255):
+            margins['bottom'] = i - canvas_offset
             break
     # left
-    for j in range(canvas_size):
-        for i in range(canvas_size):
-            if num_img[i][j] != 255:
-                margins['left'] = j
-                break
-        if 'left' in margins:
+    for i in range(canvas_size):
+        if False in (num_img[:, i] == 255):
+            margins['left'] = i
             break
     # right
-    for j in range(canvas_size):
-        for i in range(canvas_size):
-            if num_img[i][canvas_size - j - 1] != 255:
-                margins['right'] = j - canvas_offset
-                break
-        if 'right' in margins:
+    for i in range(canvas_size):
+        if False in (num_img[:, canvas_size - i - 1] == 255):
+            margins['right'] = i - canvas_offset
             break
     x_offset = int((margins['right'] - margins['left']) / 2)
     y_offset = int((margins['bottom'] - margins['top']) / 2)
@@ -158,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, help='Font point size')
     parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Convert binary image')
     parser.add_argument('-e', '--ext', dest='ext', action='store', type=str, default='png', help='Output extention')
-    parser.add_argument('-l', '--lang', dest='lang', action='store', type=str, default='eng', help='Language')
+    parser.add_argument('-l', '--lang', dest='lang', action='store', type=str, default='eng_caps', help='Language')
     args = parser.parse_args()
     if args.font_size is None:
         font_size = args.canvas_size
