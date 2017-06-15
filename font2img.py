@@ -2,20 +2,30 @@ import os
 import glob
 import argparse
 import numpy as np
+import json
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
-CAPS = [chr(i) for i in range(65, 65 + 26)]
+
+def load_charset(lang='eng', src_json_path=''):
+    if lang == 'eng':
+        caps = [chr(i) for i in range(65, 65 + 26)]
+        return caps
+    cjk = json.load(open(src_json_path))
+    return cjk[lang]
+
 
 def pil2num(pil_img):
     num_img = np.asarray(pil_img)
     num_img.flags.writeable = True
     return num_img
 
+
 def num2pil(num_img):
     pil_img = Image.fromarray(np.uint8(num_img))
     return pil_img
+
 
 def convert_binary_img(pil_img, threshold=128):
     num_img = pil2num(pil_img)
@@ -27,6 +37,7 @@ def convert_binary_img(pil_img, threshold=128):
                 num_img[row_i][col_i] = 255
     binary_pil_img = num2pil(num_img)
     return binary_pil_img
+
 
 def get_offset(pil_img, normal_canvas_size):
     num_img = pil2num(pil_img)
@@ -74,6 +85,7 @@ def get_offset(pil_img, normal_canvas_size):
     is_maximum = is_tb_maximum or is_lr_maximum
     return offsets, is_maximum
 
+
 def draw_char(char, font_path, canvas_size, font_size, is_binary=False, offsets=(0, 0)):
     font = ImageFont.truetype(font_path, size=font_size)
     img = Image.new('L', (canvas_size, canvas_size), 255)
@@ -83,14 +95,16 @@ def draw_char(char, font_path, canvas_size, font_size, is_binary=False, offsets=
         img = convert_binary_img(img)
     return img
 
+
 def draw_char_center(char, font_path, canvas_size, font_size, is_binary, check_maximum=False):
-    no_offset_img = draw_char(char, font_path, canvas_size*2, font_size)
+    no_offset_img = draw_char(char, font_path, canvas_size * 2, font_size)
     offsets, is_maximum = get_offset(no_offset_img, canvas_size)
     img = draw_char(char, font_path, canvas_size, font_size, is_binary=is_binary, offsets=offsets)
     if check_maximum:
         return img, is_maximum
     else:
         return img
+
 
 def draw_char_maximum(char, font_path, canvas_size, is_binary, **kwargs):
     font_size = canvas_size
@@ -101,6 +115,7 @@ def draw_char_maximum(char, font_path, canvas_size, is_binary, **kwargs):
         font_size += 1
     return img
 
+
 def get_ext_filepaths(dirpath, exts):
     dirpath = os.path.normpath(dirpath)
     filepaths = []
@@ -109,7 +124,8 @@ def get_ext_filepaths(dirpath, exts):
         filepaths.extend(filepaths_tmp)
     return filepaths
 
-def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False, is_binary=False, output_ext='png'):
+
+def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True, is_maximum=False, is_binary=False, output_ext='png', lang='eng'):
     if not os.path.exists(dst_dir_path):
         os.mkdir(dst_dir_path)
     if is_maximum:
@@ -118,19 +134,21 @@ def font2img(src_font_path, dst_dir_path, canvas_size, font_size, is_center=True
         draw_char_func = draw_char_center
     else:
         draw_char_func = draw_char
-    font_paths= get_ext_filepaths(src_font_path, ['ttf', 'ttc', 'otf'])
+    font_paths = get_ext_filepaths(src_font_path, ['ttf', 'ttc', 'otf'])
+    charset = load_charset(lang, './cjk.json')
     for font_path in font_paths:
         dst_img_dir_path = \
             os.path.join(dst_dir_path, os.path.basename(os.path.splitext(font_path)[0]))
         if not os.path.exists(dst_img_dir_path):
             os.mkdir(dst_img_dir_path)
-        for c in CAPS:
+        for c in charset:
             img = draw_char_func(char=c, font_path=font_path, canvas_size=canvas_size, font_size=font_size, is_binary=is_binary)
             if img:
-                img.save(os.path.join(dst_img_dir_path, c + '.'  + output_ext))
-        print ('proccessed {0}'.format(font_path))
+                img.save(os.path.join(dst_img_dir_path, c + '.' + output_ext))
+        print('proccessed {0}'.format(font_path))
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='convert ttf/otf into png/jpg/etc')
     parser.add_argument('src_dir_path', action='store', type=str, help='Directory path where source files are located.')
     parser.add_argument('dst_dir_path', action='store', type=str, help='Directory path of destination.')
@@ -140,16 +158,18 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, help='Font point size')
     parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Convert binary image')
     parser.add_argument('-e', '--ext', dest='ext', action='store', type=str, default='png', help='Output extention')
+    parser.add_argument('-l', '--lang', dest='lang', action='store', type=str, default='eng', help='Language')
     args = parser.parse_args()
-    if args.font_size == None:
+    if args.font_size is None:
         font_size = args.canvas_size
     else:
         font_size = args.font_size
-    font2img(src_font_path=args.src_dir_path, \
-             dst_dir_path=args.dst_dir_path, \
-             canvas_size=args.canvas_size, \
-             font_size=font_size, \
-             is_center=args.is_center, \
-             is_maximum=args.is_maximum, \
-             is_binary=args.is_binary, \
-             output_ext=args.ext)
+    font2img(src_font_path=args.src_dir_path,
+             dst_dir_path=args.dst_dir_path,
+             canvas_size=args.canvas_size,
+             font_size=font_size,
+             is_center=args.is_center,
+             is_maximum=args.is_maximum,
+             is_binary=args.is_binary,
+             output_ext=args.ext,
+             lang=args.lang)
