@@ -20,5 +20,8 @@ python font2img.py {フォントファイル(ttf, otf)が入ったディレク�
 |`-e (--ext) {拡張子}`|拡張子．デフォルト拡張子．デフォルトは'png'．|
 |`-m (--maximum)`|キャンバスサイズいっぱいに最大化．これ指定するとフォントサイズは無視される． **とにかく遅いです．またうまくいかないフォントも．** 改善予定…|
 |`-b (--binary)`|2値画像として保存|
+|`-l (--lang)`|作成する文字．`['eng_caps', 'jp', 'gbk', 'kr', 'gb2312_t']`から選ぶ．zi2ziのcharset/cjk.jsonから拝借している．|
 |`--not-centering`|センタリングなし．動作速い．|
 
+## References
+- [zi2zi](https://github.com/kaonashi-tyc/zi2zi)のfont2img.py
