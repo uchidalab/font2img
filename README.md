@@ -21,11 +21,11 @@ python3 font2img.py {フォントファイル(ttf, ttc, otf)が入ったディ�
 ### Options
 |オプションコマンド|効果|デフォルト値|
 |:-|:-|:-|
-|`-c (--canvas_size) {キャンバスサイズ}`|キャンバスの一辺のサイズを指定．|256|
-|`-f (--font_size) {フォントサイズ}`|フォントサイズ指定．指定しなければ適当に決まる．|canvas_size * 0.75|
+|`-c (--canvas_size) {キャンバスサイズ}`|キャンバスの一辺のサイズを指定．単位はpixel．|256|
+|`-f (--font_size) {フォントサイズ}`|フォントサイズ指定．単位はpt．指定しなければ適当に決まる．|canvas_size * 0.75|
 |`-e (--ext) {拡張子}`|出力する画像の拡張子．|png|
 |`--not-centering`|センタリングしないように．|False|
-|`-m (--maximum)`|キャンバスサイズいっぱいに最大化．ちょっと処理遅め．|False|
+|`-m (--maximum)`|キャンバスサイズいっぱいに最大化．処理遅め．|False|
 |`-b (--binary)`|2値画像として保存．|False|
 |`-v (--verbose)`|フォント毎の進捗表示．最大化するときつけると良いかも．|False|
 
