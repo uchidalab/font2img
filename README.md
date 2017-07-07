@@ -16,7 +16,7 @@ pip3 install pillow numpy progressbar2
 
 ## Usage
 ```
-python3 font2img.py {フォントファイル(ttf, ttc, otf)が入ったディレクトリ} {画像化したい文字列が入ったtxt} {出力ディレクトリ(自動生成)} [options]
+python3 font2img.py {フォントファイル(ttf, ttc, otf, otc)が入ったディレクトリ} {画像化したい文字列が入ったtxt} {出力ディレクトリ(自動生成)} [options]
 ```
 ### Options
 |オプションコマンド|効果|デフォルト値|
