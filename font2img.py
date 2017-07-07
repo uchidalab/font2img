@@ -7,7 +7,7 @@ from progressbar import ProgressBar
 
 INVISIBLE_CHARS = [' ', '　', '\n', '\r', '\t', '\a', '\b', '\f', '\v']
 AVOIDED_CHARS = ['\\', '\0', '/', ':', '*', '?', '"', '<', '>', '|']
-FONT_EXTS = ['ttf', 'ttc', 'otf']
+FONT_EXTS = ['ttf', 'ttc', 'otf', 'otc']
 
 
 class font2img():
