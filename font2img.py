@@ -212,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('src_font_dir_path', action='store', type=str, help='Directory path where source files are located.')
     parser.add_argument('src_chars_txt_path', action='store', type=str, help='Characters txt path.')
     parser.add_argument('dst_dir_path', action='store', type=str, help='Directory path of destination.')
-    parser.add_argument('-c', '--canvas', dest='canvas_size', action='store', type=int, default=256, help='Canvas-size[pixel]. (256)')
+    parser.add_argument('-c', '--canvas_size', dest='canvas_size', action='store', type=int, default=256, help='Canvas-size[pixel]. (256)')
     parser.add_argument('-f', '--font-size', dest='font_size', action='store', type=int, default=0, help='Font-size[pt]. (canvas-size*0.75[pt])')
     parser.add_argument('-e', '--ext', dest='output_ext', action='store', type=str, default='png', help="Output images' extention. (png)")
     parser.add_argument('--not-centering', dest='is_center', action='store_false', help='Centerize or not. (True)')
