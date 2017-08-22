@@ -13,7 +13,7 @@ ALPHABET_CAPS = [chr(i) for i in range(65, 65 + 26)]
 
 class font2img():
 
-    def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path, canvas_size, font_size, output_ext, is_center, is_maximum, is_binary, is_verbose):
+    def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path, canvas_size, font_size, output_ext, is_center, is_maximum, is_binary, is_unicode, is_verbose):
         '''
         コンストラクタ
         '''
@@ -26,6 +26,7 @@ class font2img():
         else:
             self.font_size = font_size
         self.output_ext = output_ext
+        self.is_unicode = is_unicode
         self.is_verbose = is_verbose
 
         # 最大化，センタリング有り，センタリング無しで別の関数を使用
@@ -103,8 +104,8 @@ class font2img():
                 if self._is_white(img):
                     failure_chars.append(c)
                 else:
-                    # ファイル名に使えない文字(特にWindowsで)は文字コードに変換
-                    if c in AVOIDED_CHARS:
+                    # ファイル名に使えない文字(特にWindowsで)は必ず文字コードに変換
+                    if self.is_unicode or c in AVOIDED_CHARS:
                         c = ord(c)
                     # アルファベット大文字と小文字が両方ある場合，大文字に'_'を付与
                     elif c in ALPHABET_CAPS and chr(ord(c) + 32) in self.chars:
@@ -224,6 +225,7 @@ if __name__ == '__main__':
     parser.add_argument('--not-centering', dest='is_center', action='store_false', help='Centerize or not. (True)')
     parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximize or not. (False)')
     parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Binarize or not. (False)')
+    parser.add_argument('-u', '--unicode', dest='is_unicode', action='store_true', help='Save as unicode point (False)')
     parser.add_argument('-v', '--verbose', dest='is_verbose', action='store_true', help='Show progress or not. (False)')
     args = parser.parse_args()
     f2i = font2img(src_font_dir_path=args.src_font_dir_path,
@@ -235,5 +237,6 @@ if __name__ == '__main__':
                    is_center=args.is_center,
                    is_maximum=args.is_maximum,
                    is_binary=args.is_binary,
+                   is_unicode=args.is_unicode,
                    is_verbose=args.is_verbose)
     f2i.run()
