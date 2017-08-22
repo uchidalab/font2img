@@ -80,8 +80,6 @@ class font2img():
         for c in INVISIBLE_CHARS:
             if c in self.chars:
                 self.chars.remove(c)
-        # for i in range(65, 65 + 26):
-        #     if chr(i) in self.chars and chr(i + )
 
     def run(self):
         '''
