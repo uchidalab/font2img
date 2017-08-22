@@ -8,6 +8,8 @@ from progressbar import ProgressBar
 INVISIBLE_CHARS = [' ', '　', '\n', '\r', '\t', '\a', '\b', '\f', '\v']
 AVOIDED_CHARS = ['\\', '\0', '/', ':', '*', '?', '"', '<', '>', '|']
 FONT_EXTS = ['ttf', 'ttc', 'otf', 'otc']
+ALPHABET_CAPS = [chr(i) for i in range(65, 65 + 26)]
+ALPHABET_SMALLS = [chr(i) for i in range(97, 97 + 26)]
 
 
 class font2img():
@@ -78,6 +80,8 @@ class font2img():
         for c in INVISIBLE_CHARS:
             if c in self.chars:
                 self.chars.remove(c)
+        # for i in range(65, 65 + 26):
+        #     if chr(i) in self.chars and chr(i + )
 
     def run(self):
         '''
@@ -103,6 +107,9 @@ class font2img():
                     # ファイル名に使えない文字(特にWindowsで)は文字コードに変換
                     if c in AVOIDED_CHARS:
                         c = ord(c)
+                    # アルファベット大文字と小文字が両方ある場合，大文字に'_'を付与
+                    elif c in ALPHABET_CAPS and chr(ord(c) + 32) in self.chars:
+                        c += '_'
                     img.save(os.path.join(dst_img_dir_path, '{}.{}'.format(c, self.output_ext)))
             if failure_chars:
                 failure_chars.sort()
