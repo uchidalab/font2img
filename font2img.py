@@ -9,7 +9,6 @@ INVISIBLE_CHARS = [' ', '　', '\n', '\r', '\t', '\a', '\b', '\f', '\v']
 AVOIDED_CHARS = ['\\', '\0', '/', ':', '*', '?', '"', '<', '>', '|']
 FONT_EXTS = ['ttf', 'ttc', 'otf', 'otc']
 ALPHABET_CAPS = [chr(i) for i in range(65, 65 + 26)]
-ALPHABET_SMALLS = [chr(i) for i in range(97, 97 + 26)]
 
 
 class font2img():
