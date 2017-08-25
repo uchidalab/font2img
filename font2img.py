@@ -141,12 +141,18 @@ class font2img():
         '''
         最大化して描画
         '''
-        # TODO: もっと高速かできるはず
-        while True:
-            img, is_maximum = self._draw_char_center(char, font_path, canvas_size, font_size, is_check_maximum=True)
-            if is_maximum:
-                break
-            font_size += 1
+        # TODO: もっとキレイにしたいところ…
+        def search_maximum_font_size(start, step):
+            current_font_size = start
+            while True:
+                img, is_maximum = self._draw_char_center(char, font_path, canvas_size, current_font_size, is_check_maximum=True)
+                if is_maximum:
+                    break
+                current_font_size += step
+            return img, current_font_size
+        step = 20
+        _, maximum_font_size = search_maximum_font_size(font_size, step)
+        img, _ = search_maximum_font_size(maximum_font_size - step, 1)
         return img
 
     def _get_offset(self, pil_img):
