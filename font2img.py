@@ -187,8 +187,8 @@ class font2img():
         x_offset = int((margins['right'] - margins['left']) / 2)
         y_offset = int((margins['bottom'] - margins['top']) / 2)
         offsets = (x_offset, y_offset)
-        is_tb_maximum = margins['top'] + margins['bottom'] <= 0
-        is_lr_maximum = margins['right'] + margins['left'] <= 0
+        is_tb_maximum = margins['top'] + margins['bottom'] <= 0 or margins['bottom'] == - canvas_offset
+        is_lr_maximum = margins['right'] + margins['left'] <= 0 or margins['right'] == - canvas_offset
         is_maximum = is_tb_maximum or is_lr_maximum
         return offsets, is_maximum
 
