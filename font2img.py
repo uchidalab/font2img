@@ -3,7 +3,7 @@ import glob
 import argparse
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from progressbar import ProgressBar
+from tqdm import tqdm
 
 INVISIBLE_CHARS = [' ', '　', '\n', '\r', '\t', '\a', '\b', '\f', '\v']
 AVOIDED_CHARS = ['\\', '\0', '/', ':', '*', '?', '"', '<', '>', '|']
@@ -13,7 +13,7 @@ ALPHABET_CAPS = [chr(i) for i in range(65, 65 + 26)]
 
 class font2img():
 
-    def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path, canvas_size, font_size, output_ext, is_center, is_maximum, is_binary, is_unicode, is_verbose):
+    def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path, canvas_size, font_size, output_ext, is_center, is_maximum, is_binary, is_unicode):
         '''
         コンストラクタ
         '''
@@ -27,11 +27,15 @@ class font2img():
             self.font_size = font_size
         self.output_ext = output_ext
         self.is_unicode = is_unicode
-        self.is_verbose = is_verbose
+
+        # 文字単位の進捗表示
+        self.is_char_pbar = False
 
         # 最大化，センタリング有り，センタリング無しで別の関数を使用
         if is_maximum:
             self._draw_char_func = self._draw_char_maximum
+            # 最大化ONなら文字単位の進捗表示
+            self.is_char_pbar = True
         elif is_center:
             self._draw_char_func = self._draw_char_center
         else:
@@ -80,23 +84,28 @@ class font2img():
         for c in INVISIBLE_CHARS:
             if c in self.chars:
                 self.chars.remove(c)
+        # 文字が1000以上なら進捗表示する
+        if len(self.chars) > 1000:
+            self.is_char_pbar = True
 
     def run(self):
         '''
         フォントの画像化実行
         '''
-        for font_path in self.font_paths:
-            print('proccessing {0}'.format(font_path))
+        pbar_font_paths = tqdm(self.font_paths)
+        for font_path in pbar_font_paths:
+            pbar_font_paths.set_description('{: <30}'.format(os.path.basename(font_path)))
             font_name = os.path.basename(os.path.splitext(font_path)[0])
             dst_img_dir_path = os.path.join(self.dst_dir_path, font_name)
             failure_chars = list()
             if not os.path.exists(dst_img_dir_path):
                 os.mkdir(dst_img_dir_path)
-            if self.is_verbose:
-                progbar = ProgressBar(max_value=len(self.chars))
-            for i, c in enumerate(self.chars):
-                if self.is_verbose:
-                    progbar.update(i + 1)
+            pbar_chars = tqdm(self.chars)
+            for i, c in enumerate(pbar_chars):
+                # 文字単位の進捗表示なしならclear
+                if not self.is_char_pbar:
+                    pbar_chars.clear()
+                pbar_chars.set_description('{}'.format(' ' * 30))
                 img = self._draw_char_func(c, font_path, self.canvas_size, self.font_size)
                 # 画像が真っ白，つまり画像化失敗した文字はfailure_charsに
                 if self._is_white(img):
@@ -111,7 +120,6 @@ class font2img():
                     img.save(os.path.join(dst_img_dir_path, '{}.{}'.format(c, self.output_ext)))
             if failure_chars:
                 failure_chars.sort()
-                print('failure characters: {}'.format(failure_chars))
                 # 失敗したリストを書き込み．
                 # TODO: 単純に追記にしているので，うまく更新できるように
                 self.failure_chars_txt.write('{},{}\n'.format(font_name, failure_chars))
@@ -230,7 +238,6 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximize or not. (False)')
     parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Binarize or not. (False)')
     parser.add_argument('-u', '--unicode', dest='is_unicode', action='store_true', help='Save as unicode point (False)')
-    parser.add_argument('-v', '--verbose', dest='is_verbose', action='store_true', help='Show progress or not. (False)')
     args = parser.parse_args()
     f2i = font2img(src_font_dir_path=args.src_font_dir_path,
                    src_chars_txt_path=args.src_chars_txt_path,
@@ -241,6 +248,5 @@ if __name__ == '__main__':
                    is_center=args.is_center,
                    is_maximum=args.is_maximum,
                    is_binary=args.is_binary,
-                   is_unicode=args.is_unicode,
-                   is_verbose=args.is_verbose)
+                   is_unicode=args.is_unicode)
     f2i.run()
