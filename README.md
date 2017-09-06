@@ -8,10 +8,10 @@ PythonのPillowで試しに作ってみたものです．
 - Python 3
 - Pillow
 - Numpy
-- ProgressBar2
+- tqdm
 
 ```
-pip3 install pillow numpy progressbar2
+pip3 install pillow numpy tqdm
 ```
 
 ## Usage
@@ -28,7 +28,6 @@ python3 font2img.py {フォントファイル(ttf, ttc, otf, otc)が入ったデ
 |`-m (--maximum)`|キャンバスサイズいっぱいに最大化．処理遅め．|False|
 |`-b (--binary)`|2値画像として保存．|False|
 |`-u (--unicode)`|画像のファイル名をUnicodeの数値として保存．|False|
-|`-v (--verbose)`|フォント毎の進捗表示．最大化するときつけると良いかも．|False|
 
 ## Features
 - 入力txtはただのtxtファイルでOK．A-Zを出力したいなら`ABCDEFGHIJKLMNOPQRSTUVWXYZ`と書く．
