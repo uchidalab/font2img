@@ -55,10 +55,10 @@ class font2img():
         self._get_font_paths()
         self._get_chars()
 
-        self.failure_chars_txt = open(os.path.join(self.dst_dir_path, 'failure_chars.txt'), 'a')
+        self.failure_txt = open(os.path.join(self.dst_dir_path, 'failure.txt'), 'a')
 
     def __del__(self):
-        self.failure_chars_txt.close()
+        self.failure_txt.close()
 
     def _get_font_paths(self):
         '''
@@ -98,10 +98,14 @@ class font2img():
             font_name = os.path.basename(os.path.splitext(font_path)[0])
             dst_img_dir_path = os.path.join(self.dst_dir_path, font_name)
             failure_chars = list()
+            same_fonts_n = 0
             if not os.path.exists(dst_img_dir_path):
                 os.mkdir(dst_img_dir_path)
             pbar_chars = tqdm(self.chars)
+            img, prev_img = None, None
             for i, c in enumerate(pbar_chars):
+                if img:
+                    prev_img = img
                 # 文字単位の進捗表示なしならclear
                 if not self.is_char_pbar:
                     pbar_chars.clear()
@@ -110,19 +114,28 @@ class font2img():
                 # 画像が真っ白，つまり画像化失敗した文字はfailure_charsに
                 if self._is_white(img):
                     failure_chars.append(c)
-                else:
-                    # ファイル名に使えない文字(特にWindowsで)は必ず文字コードに変換
-                    if self.is_unicode or c in AVOIDED_CHARS:
-                        c = ord(c)
-                    # アルファベット大文字と小文字が両方ある場合，大文字に'_'を付与
-                    elif c in ALPHABET_CAPS and chr(ord(c) + 32) in self.chars:
-                        c += '_'
-                    img.save(os.path.join(dst_img_dir_path, '{}.{}'.format(c, self.output_ext)))
+                    continue
+                # 一つ前の画像と全く同じものをカウント
+                if prev_img and self._is_same(img, prev_img):
+                    same_fonts_n += 1
+                # ファイル名に使えない文字(特にWindowsで)は必ず文字コードに変換
+                if self.is_unicode or c in AVOIDED_CHARS:
+                    c = ord(c)
+                # アルファベット大文字と小文字が両方ある場合，大文字に'_'を付与
+                elif c in ALPHABET_CAPS and chr(ord(c) + 32) in self.chars:
+                    c += '_'
+                img.save(os.path.join(dst_img_dir_path, '{}.{}'.format(c, self.output_ext)))
             if failure_chars:
                 failure_chars.sort()
                 # 失敗したリストを書き込み．
                 # TODO: 単純に追記にしているので，うまく更新できるように
-                self.failure_chars_txt.write('{},{}\n'.format(font_name, failure_chars))
+                self.failure_txt.write('{},white,{}\n'.format(font_name, failure_chars))
+            if same_fonts_n == len(pbar_chars) - 1:
+                for f in glob.glob(os.path.join(dst_img_dir_path, '*.{}'.format(self.output_ext))):
+                    os.remove(f)
+                self.failure_txt.write('{},same\n'.format(font_name))
+            if not os.listdir(dst_img_dir_path):
+                os.rmdir(dst_img_dir_path)
 
     def _draw_char(self, char, font_path, canvas_size, font_size, offsets=(0, 0)):
         '''
@@ -209,6 +222,15 @@ class font2img():
         if False not in (num_img[:] == self.white_value):
             return True
         return False
+
+    def _is_same(self, prev_pil_img, cur_pil_img):
+        '''
+        画像が真っ白かチェック
+        真っ白ならTrueを返す
+        '''
+        prev_num_img = self._pil2num(prev_pil_img)
+        cur_num_img = self._pil2num(cur_pil_img)
+        return np.array_equal(prev_num_img, cur_num_img)
 
     def _pil2num(self, pil_img):
         '''
