@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 import argparse
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -70,7 +70,7 @@ class font2img():
         '''
         self.font_paths = list()
         for ext in FONT_EXTS:
-            tmp = glob.glob(self.src_font_dir_path + '/*.' + ext)
+            tmp = glob(self.src_font_dir_path + '/*.' + ext)
             self.font_paths.extend(tmp)
 
     def _get_chars(self):
@@ -156,7 +156,7 @@ class font2img():
                     os.remove(dst_img_path)
                 self.failure_txt.write('{},same\n'.format(font_name))
         # 最終的に，空だったディレクトリを削除
-        for path in glob.glob(self.dst_dir_path + '/*'):
+        for path in glob(self.dst_dir_path + '/*'):
             if os.path.isdir(path) and not os.listdir(path):
                 os.rmdir(path)
 
