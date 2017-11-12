@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 import argparse
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -13,7 +13,9 @@ ALPHABET_CAPS = [chr(i) for i in range(65, 65 + 26)]
 
 class font2img():
 
-    def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path, canvas_size, font_size, output_ext, is_center, is_maximum, is_binary, is_unicode):
+    def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path,
+                 canvas_size, font_size, output_ext, is_center, is_maximum,
+                 is_binary, is_unicode, is_by_char):
         '''
         コンストラクタ
         '''
@@ -27,6 +29,7 @@ class font2img():
             self.font_size = font_size
         self.output_ext = output_ext
         self.is_unicode = is_unicode
+        self.is_by_char = is_by_char
 
         # 文字単位の進捗表示
         self.is_char_pbar = False
@@ -67,7 +70,7 @@ class font2img():
         '''
         self.font_paths = list()
         for ext in FONT_EXTS:
-            tmp = glob.glob(self.src_font_dir_path + '/*.' + ext)
+            tmp = glob(self.src_font_dir_path + '/*.' + ext)
             self.font_paths.extend(tmp)
 
     def _get_chars(self):
@@ -84,6 +87,16 @@ class font2img():
         for c in INVISIBLE_CHARS:
             if c in self.chars:
                 self.chars.remove(c)
+        self.escape_chars = list()
+        for c in self.chars:
+            # ファイル名に使えない文字(特にWindowsで)は必ず文字コードに変換
+            if self.is_unicode or c in AVOIDED_CHARS:
+                self.escape_chars.append(ord(c))
+            # アルファベット大文字と小文字が両方ある場合，大文字に'_'を付与
+            elif c in ALPHABET_CAPS and chr(ord(c) + 32) in self.chars:
+                self.escape_chars.append(c + '_')
+            else:
+                self.escape_chars.append(c)
         # 文字が1000以上なら進捗表示する
         if len(self.chars) > 1000:
             self.is_char_pbar = True
@@ -92,17 +105,24 @@ class font2img():
         '''
         フォントの画像化実行
         '''
+        if self.is_by_char:
+            for ec in self.escape_chars:
+                dst_img_dir_path = os.path.join(self.dst_dir_path, ec)
+                if not os.path.exists(dst_img_dir_path):
+                    os.mkdir(dst_img_dir_path)
         pbar_font_paths = tqdm(self.font_paths)
         for font_path in pbar_font_paths:
             pbar_font_paths.set_description('{: <30}'.format(os.path.basename(font_path)))
             font_name = os.path.basename(os.path.splitext(font_path)[0])
-            dst_img_dir_path = os.path.join(self.dst_dir_path, font_name)
             failure_chars = list()
             same_fonts_n = 0
-            if not os.path.exists(dst_img_dir_path):
-                os.mkdir(dst_img_dir_path)
+            if not self.is_by_char:
+                dst_img_dir_path = os.path.join(self.dst_dir_path, font_name)
+                if not os.path.exists(dst_img_dir_path):
+                    os.mkdir(dst_img_dir_path)
             pbar_chars = tqdm(self.chars)
             img, prev_img = None, None
+            dst_img_paths = list()
             for i, c in enumerate(pbar_chars):
                 if img:
                     prev_img = img
@@ -118,24 +138,27 @@ class font2img():
                 # 一つ前の画像と全く同じものをカウント
                 if prev_img and self._is_same(img, prev_img):
                     same_fonts_n += 1
-                # ファイル名に使えない文字(特にWindowsで)は必ず文字コードに変換
-                if self.is_unicode or c in AVOIDED_CHARS:
-                    c = ord(c)
-                # アルファベット大文字と小文字が両方ある場合，大文字に'_'を付与
-                elif c in ALPHABET_CAPS and chr(ord(c) + 32) in self.chars:
-                    c += '_'
-                img.save(os.path.join(dst_img_dir_path, '{}.{}'.format(c, self.output_ext)))
+                if self.is_by_char:
+                    file_name = font_name
+                    dst_img_dir_path = os.path.join(self.dst_dir_path, self.escape_chars[i])
+                else:
+                    file_name = self.escape_chars[i]
+                dst_img_path = os.path.join(dst_img_dir_path, '{}.{}'.format(file_name, self.output_ext))
+                img.save(dst_img_path)
+                dst_img_paths.append(dst_img_path)
             if failure_chars:
                 failure_chars.sort()
                 # 失敗したリストを書き込み．
                 # TODO: 単純に追記にしているので，うまく更新できるように
                 self.failure_txt.write('{},white,{}\n'.format(font_name, failure_chars))
             if same_fonts_n == len(pbar_chars) - 1:
-                for f in glob.glob(os.path.join(dst_img_dir_path, '*.{}'.format(self.output_ext))):
-                    os.remove(f)
+                for dst_img_path in dst_img_paths:
+                    os.remove(dst_img_path)
                 self.failure_txt.write('{},same\n'.format(font_name))
-            if not os.listdir(dst_img_dir_path):
-                os.rmdir(dst_img_dir_path)
+        # 最終的に，空だったディレクトリを削除
+        for path in glob(self.dst_dir_path + '/*'):
+            if os.path.isdir(path) and not os.listdir(path):
+                os.rmdir(path)
 
     def _draw_char(self, char, font_path, canvas_size, font_size, offsets=(0, 0)):
         '''
@@ -260,6 +283,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--maximum', dest='is_maximum', action='store_true', help='Maximize or not. (False)')
     parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Binarize or not. (False)')
     parser.add_argument('-u', '--unicode', dest='is_unicode', action='store_true', help='Save as unicode point (False)')
+    parser.add_argument('--by-char', dest='is_by_char', action='store_true', help='Subdirectory will be character name (False)')
     args = parser.parse_args()
     f2i = font2img(src_font_dir_path=args.src_font_dir_path,
                    src_chars_txt_path=args.src_chars_txt_path,
@@ -270,5 +294,6 @@ if __name__ == '__main__':
                    is_center=args.is_center,
                    is_maximum=args.is_maximum,
                    is_binary=args.is_binary,
-                   is_unicode=args.is_unicode)
+                   is_unicode=args.is_unicode,
+                   is_by_char=args.is_by_char)
     f2i.run()
