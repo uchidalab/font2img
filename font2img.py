@@ -15,7 +15,7 @@ class font2img():
 
     def __init__(self, src_font_dir_path, src_chars_txt_path, dst_dir_path,
                  canvas_size, font_size, output_ext, is_center, is_maximum,
-                 is_binary, is_unicode, is_by_char):
+                 is_binary, is_unicode, is_by_char, is_recursive):
         '''
         コンストラクタ
         '''
@@ -30,6 +30,7 @@ class font2img():
         self.output_ext = output_ext
         self.is_unicode = is_unicode
         self.is_by_char = is_by_char
+        self.is_recursive = is_recursive
 
         # 文字単位の進捗表示
         self.is_char_pbar = False
@@ -70,7 +71,10 @@ class font2img():
         '''
         self.font_paths = list()
         for ext in FONT_EXTS:
-            tmp = glob(self.src_font_dir_path + '/*.' + ext)
+            if self.is_recursive:
+                tmp = glob(self.src_font_dir_path + '/**/*.' + ext, recursive=True)
+            else:
+                tmp = glob(self.src_font_dir_path + '/*.' + ext)
             self.font_paths.extend(tmp)
 
     def _get_chars(self):
@@ -284,6 +288,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--binary', dest='is_binary', action='store_true', help='Binarize or not. (False)')
     parser.add_argument('-u', '--unicode', dest='is_unicode', action='store_true', help='Save as unicode point (False)')
     parser.add_argument('--by-char', dest='is_by_char', action='store_true', help='Subdirectory will be character name (False)')
+    parser.add_argument('-r', '--recursive', dest='is_recursive', action='store_true', help='Search font files recursively (False)')
     args = parser.parse_args()
     f2i = font2img(src_font_dir_path=args.src_font_dir_path,
                    src_chars_txt_path=args.src_chars_txt_path,
@@ -295,5 +300,6 @@ if __name__ == '__main__':
                    is_maximum=args.is_maximum,
                    is_binary=args.is_binary,
                    is_unicode=args.is_unicode,
-                   is_by_char=args.is_by_char)
+                   is_by_char=args.is_by_char,
+                   is_recursive=args.is_recursive)
     f2i.run()
