@@ -29,6 +29,7 @@ python3 font2img.py {フォントファイル(ttf, ttc, otf, otc)が入ったデ
 |`-b (--binary)`|2値画像として保存．|False|
 |`-u (--unicode)`|画像のファイル名をUnicodeの数値として保存．|False|
 |`--by-char`|階層構造を変更．サブディレクトリ名が文字名に.|False|
+|`-r (--recursive)`|サブディレクトリのフォントファイルも探索．|False|
 
 ## Features
 - 入力txtはただのtxtファイルでOK．A-Zを出力したいなら`ABCDEFGHIJKLMNOPQRSTUVWXYZ`と書く．
